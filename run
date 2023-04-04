@@ -1,0 +1,90 @@
+#!/bin/bash
+
+RED="\x1b[31;1m"
+GREER="\x1b[32;1m"
+YELLO="\x1b[33;1m"
+NORMAL=$(tput sgr0)
+
+BOT_NAME="kawaii-uwu"
+TEMP_FILE="/tmp/$BOT_NAME.pid"
+
+start_bot() {
+	if [ -f $TEMP_FILE ]; then
+		if ps -p $(cat $TEMP_FILE) > /dev/null; then
+				printf "${RED}the bot is already started!${NORMAL}\n"
+			exit
+		fi
+	fi
+	printf "${GREER} starting ze bot!${NORMAL}\n"
+	export DTOKEN=$(cat token)
+	if [ $1 == "r" ]; then
+		(./target/release/$BOT_NAME & echo "$!" > $TEMP_FILE) 2>&1 | tee log &
+	else
+		(./target/debug/$BOT_NAME & echo "$!" > $TEMP_FILE) 2>&1 | tee log &
+	fi
+}
+
+stop_bot() {
+	if ! [ -f $TEMP_FILE ]; then
+		printf "${RED}the PID file doesn't exists, so probably the bot is stopped, but who knows${NORMAL}\n"
+		exit
+	fi
+
+	if ! ps -p $(cat $TEMP_FILE) > /dev/null; then
+		printf "${RED}the bot is already stopped! (at least I think)${NORMAL}\n"
+		exit
+	fi
+
+	kill -SIGTERM $(cat $TEMP_FILE)
+	printf "${GREER}bot (hopefully) was ${RED}KILLED!${NORMAL}\n"
+}
+
+restart_bot() {
+	printf "${YELLO}restarting bot!${NORMAL}\n"
+	stop_bot
+	sleep 3
+	start_bot r
+}
+
+get_status() {
+	if ! [ -f $TEMP_FILE ]; then
+		printf "${RED}the PID file doesn't exists, so probably the bot is stopped, but who knows${NORMAL}\n"
+		exit
+	elif ! ps -p $(cat $TEMP_FILE) > /dev/null; then
+		printf "bot is ${RED}stopped${NORMAL}\n"
+		exit
+	fi
+	printf "bot is "${GREER}"running${NORMAL}\n"
+	ps -q $(cat $TEMP_FILE) -o comm=NAME,pid=PID,stime=STIME,etime=TIME,pcpu=CPU%,rss=MEM | awk 'NR==1 {$1="\x1b[31;1m"$1"\t"}{$1="\x1b[31;1m"$1"\t"; $2="\x1b[32;1m"$2"\t"; $3="\x1b[33;1m"$3"\t"} NR==1 {$4="\x1b[34;1m"$4"\t"} {$4="\x1b[34;1m"$4"\t"; $5="\x1b[35;1m"$5"\t"} NR==1 {$6="\x1b[36;1m"$6} NR!=1 {$6="\x1b[36;1m"$6/1024"MB\t"} {print}'
+}
+
+bruh_help(){
+	printf "a helper script for discord bots\n
+Usage: run <option>
+ Options:
+  start   - starts the bot (duh)
+  stop    - stops the bot (duh)
+  restart - restarts the bot (duh)
+  status  - show the status of the bot (duh)\n"
+}
+
+case $1 in
+	start)
+		start_bot r
+		exit;;
+	test)
+		start_bot d
+		exit;;
+	stop)
+		stop_bot
+		exit;;
+	restart)
+		restart_bot
+		exit;;
+	status)
+		get_status
+		exit;;
+	*)
+		bruh_help
+		exit;;
+esac

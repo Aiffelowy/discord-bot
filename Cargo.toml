@@ -1,0 +1,17 @@
+[package]
+name = "kawaii-uwu"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+serenity = { default-features = false, features = ["client", "gateway", "rustls_backend", "model", "cache"], version = "*" }
+songbird = { features = ["builtin-queue"], version = "*" }
+tokio = { features = ["macros", "rt-multi-thread"], version = "*"}
+wav = "*"
+serde_json = "*"
+rand = "*"
+reqwest = "*"
+clokwerk = "*"
+coqui-stt = "*"
